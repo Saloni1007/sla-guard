@@ -1,0 +1,23 @@
+{
+    "threshold": 0.30000000000000004,
+    "target_recall": 0.85,
+    "dataset_type": "synthetic",
+    "training_rows": 30000,
+    "validation_rows": 10000,
+    "test_rows": 10000,
+    "feature_names": [
+        "cpu_requested",
+        "memory_requested",
+        "cpu_utilization",
+        "memory_utilization",
+        "machine_cpu_utilization",
+        "machine_memory_utilization",
+        "queue_length",
+        "priority",
+        "scheduling_class",
+        "network_latency_ms",
+        "estimated_runtime_sec",
+        "resource_contention"
+    ],
+    "selection_method": "Highest precision among thresholds achieving validation recall >= 85%"
+}
