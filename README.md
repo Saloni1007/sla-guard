@@ -1,303 +1,679 @@
-# SLA GUARD: Machine Learning-Based SLA Violation Prediction in Cloud Computing
-
-SLA Guard is a machine learning-based web application designed to predict potential Service Level Agreement (SLA) violations in cloud computing workloads.
-
-The system analyzes workload characteristics and resource utilization parameters using a trained Random Forest classification model. It estimates the probability of an SLA violation and classifies the workload based on a selected probability threshold.
-
-The application combines a React-based frontend, a FastAPI backend, and a serialized machine learning model to provide an interactive prediction system.
-
-> **Important: This is a predictive prototype trained using synthetic workload data.** Its validation performance should not be interpreted as proof of performance on real cloud infrastructure. The application predicts potential violations but does not automatically prevent them or modify cloud resources.
+# SLA Guard
+## Machine Learning-Based SLA Violation Prediction System for Cloud Computing
 
 ---
 
-## 1. Research problem and motivation
+## Table of Contents
 
-Cloud computing environments provide shared computing resources to multiple applications and users. These resources include CPU, memory, storage, and network bandwidth.
+1. Project Overview
+2. Problem Statement
+3. Motivation
+4. Project Objectives
+5. Scope of the Project
+6. Technology Stack
+7. System Architecture
+8. Overall System Workflow
+9. Dataset Description
+10. Dataset Features
+11. Target Variable
+12. Data Preparation
+13. Dataset Splitting Strategy
+14. Machine Learning Approach
+15. Random Forest Classifier
+16. Model Configuration
+17. Handling Class Imbalance
+18. Classification Probability
+19. Classification Threshold Optimization
+20. Model Training Workflow
+21. Model Validation
+22. Evaluation Metrics
+23. Validation Results
+24. Backend Implementation
+25. FastAPI Framework
+26. Model Loading and Prediction
+27. Prediction API
+28. Frontend Implementation
+29. Frontend-Backend Communication
+30. Dashboard and Prediction Output
+31. Model Serialization
+32. Project Directory Structure
+33. Installation Requirements
+34. Local Setup
+35. Running the Application
+36. API Testing
+37. Example Prediction Workflow
+38. Advantages
+39. Limitations
+40. Future Scope
+41. Conclusion
+42. GitHub Repository
 
-Cloud service providers are expected to maintain agreed service quality and performance levels through Service Level Agreements (SLAs).
+---
 
-However, cloud workloads are dynamic. Resource utilization and workload requirements can change continuously depending on application demand.
+# 1. Project Overview
 
-Several conditions can increase the possibility of SLA violations:
+SLA Guard is a machine learning-based web application developed to predict potential Service Level Agreement (SLA) violations in cloud computing workloads.
+
+Cloud computing platforms provide computing resources such as CPU, memory, storage, and network connectivity to users and applications. These resources are shared among multiple workloads, making resource management an important aspect of cloud infrastructure.
+
+An SLA defines the expected level of service between a service provider and a customer. It may specify performance requirements, availability, response time, and other service conditions.
+
+When a cloud workload does not meet its expected service requirements, an SLA violation may occur.
+
+SLA Guard uses machine learning to analyze workload-related parameters and estimate the probability of an SLA violation.
+
+The system uses a Random Forest classification model trained on a synthetic cloud workload dataset.
+
+The trained model is integrated into a FastAPI backend, while a React-based frontend provides an interface for entering workload parameters and viewing prediction results.
+
+The primary purpose of the application is to demonstrate how machine learning can support the early identification of workloads that may be associated with SLA violations.
+
+### Key Features
+
+- Machine learning-based SLA violation prediction.
+- Analysis of CPU and memory utilization.
+- Consideration of workload queue length and priority.
+- Network latency and runtime-based input analysis.
+- Random Forest classification model.
+- Classification threshold optimization.
+- FastAPI-based prediction service.
+- React-based interactive interface.
+- Probability-based prediction output.
+- Local model integration using Joblib.
+
+---
+
+# 2. Problem Statement
+
+Cloud computing environments execute multiple workloads simultaneously.
+
+Each workload may require different amounts of CPU, memory, network resources, and execution time.
+
+When resource demand increases or available resources become insufficient, workload performance may be affected.
+
+Several factors can contribute to SLA violations, including:
 
 - High CPU utilization.
 - High memory utilization.
-- Insufficient requested resources.
-- Increasing workload queue length.
+- Increased queue length.
 - Network latency.
 - Resource contention.
-- Longer estimated execution time.
-- Inefficient workload scheduling.
+- Long execution time.
+- Inappropriate resource allocation.
 
-Traditional monitoring systems generally focus on observing current resource conditions. A predictive approach can additionally analyze workload characteristics and estimate whether a workload may violate its SLA.
+Traditional resource monitoring systems generally focus on observing current resource conditions.
 
-The objective of SLA Guard is to demonstrate how machine learning can be used to identify potential SLA violation cases from workload-related parameters.
+However, identifying a workload that may lead to an SLA violation before the violation occurs can be useful for resource management.
 
-### Main contribution
+The problem addressed by SLA Guard is:
 
-The project implements an end-to-end predictive workflow:
+**To develop a machine learning-based system that analyzes cloud workload parameters and predicts whether a workload is likely to be associated with an SLA violation.**
 
-1. Workload-related features are provided to the application.
-2. The frontend sends the input data to the backend.
-3. The backend loads the trained Random Forest model.
-4. The model estimates the probability of an SLA violation.
-5. A validation-selected classification threshold is applied.
-6. The prediction is returned to the frontend for display.
+The problem is treated as a binary classification task.
 
-The system provides a foundation for further experimentation with predictive cloud resource management.
+The output represents one of two classes:
+
+- No SLA violation.
+- SLA violation.
 
 ---
 
-## 2. System overview and workflow
+# 3. Motivation
 
-SLA Guard consists of three major components:
+The increasing adoption of cloud computing has made efficient resource utilization and service reliability important requirements.
 
-1. React frontend.
-2. FastAPI backend.
-3. Random Forest machine learning model.
+Cloud applications often operate under changing workloads.
 
-### Frontend
+Resource requirements may increase or decrease depending on the number of users, application complexity, and processing demands.
 
-The frontend is developed using React.js and Vite.
+A workload that performs normally under one resource condition may experience performance issues under another.
 
-It provides an interactive interface for entering workload parameters and viewing prediction results.
+Monitoring individual resource parameters can provide useful information, but analyzing multiple parameters together may provide a broader view of workload conditions.
 
-### Backend
+Machine learning offers a way to learn relationships between workload characteristics and previously observed target labels.
 
-The backend is developed using FastAPI.
+The motivation behind SLA Guard is to explore this approach through a complete web-based prediction system.
 
-It receives the workload information, validates the input, loads the trained model, and generates the prediction response.
+The project combines:
 
-### Machine learning model
+- Cloud workload feature analysis.
+- Supervised machine learning.
+- Probability-based classification.
+- Backend API development.
+- Frontend integration.
 
-The machine learning component uses a Random Forest classifier trained on a synthetic cloud workload dataset.
-
-The model generates a probability estimate for the positive class, which represents an SLA violation.
-
-### Prediction workflow
-
-1. The user opens the SLA Guard application.
-2. The user enters the required workload parameters.
-3. The React frontend collects the input values.
-4. The frontend sends a JSON request to the FastAPI backend.
-5. The backend validates the received input.
-6. The trained Random Forest model processes the workload features.
-7. The model generates a probability estimate.
-8. The probability is compared with the configured classification threshold.
-9. The backend returns the prediction response.
-10. The frontend displays the predicted SLA status and probability.
-
-The model is loaded from a saved file rather than being retrained for every prediction request.
+The application demonstrates how a trained model can be made accessible through a web interface rather than being restricted to a standalone Python script.
 
 ---
 
-## 3. Dataset description
+# 4. Project Objectives
 
-### Dataset overview
+The major objectives of SLA Guard are listed below.
 
-The project uses a synthetic cloud workload dataset containing:
+### 4.1 Prediction of SLA Violations
 
-- **Total records:** 50,000
-- **Input features:** 12
-- **Target variable:** 1
-- **Total columns:** 13
+Develop a classification model capable of predicting potential SLA violations using workload-related parameters.
 
-Each record represents a workload observation containing information about resource requirements, resource utilization, scheduling characteristics, and performance-related parameters.
+### 4.2 Workload Analysis
 
-The dataset is used for training, validation, and testing of the machine learning model.
+Analyze multiple input features, including CPU utilization, memory utilization, queue length, and network latency.
 
-### Input features
+### 4.3 Machine Learning Integration
 
-The model uses the following 12 input features.
+Train a Random Forest classifier and integrate the saved model into a backend application.
 
-| Feature | Description |
+### 4.4 Threshold Optimization
+
+Investigate the classification threshold to improve the identification of positive SLA violation cases.
+
+### 4.5 Web Application Development
+
+Build a user interface that allows users to provide workload parameters and view prediction results.
+
+### 4.6 API Development
+
+Develop a FastAPI backend to receive input data, perform predictions, and return structured responses.
+
+### 4.7 Model Accessibility
+
+Make the trained machine learning model available through a locally running web application.
+
+---
+
+# 5. Scope of the Project
+
+SLA Guard focuses on predicting SLA violations from workload-related input parameters.
+
+The current implementation includes:
+
+1. A synthetic cloud workload dataset.
+2. Data preparation and feature selection.
+3. Random Forest model training.
+4. Validation-based threshold optimization.
+5. Model serialization.
+6. FastAPI backend integration.
+7. React frontend integration.
+8. Prediction probability and classification output.
+
+The system currently operates as a prediction prototype.
+
+It does not directly interact with a real cloud infrastructure or automatically modify resource allocation.
+
+It also does not automatically prevent SLA violations.
+
+The project focuses on identifying potential violations through machine learning predictions.
+
+---
+
+# 6. Technology Stack
+
+The application uses a combination of frontend, backend, and machine learning technologies.
+
+| Component | Technology | Purpose |
+|---|---|---|
+| Frontend | React.js | User interface |
+| Frontend tooling | Vite | Development server and build tooling |
+| Backend | Python | Backend programming language |
+| API framework | FastAPI | Prediction API |
+| Machine learning | Scikit-learn | Model development |
+| Model | Random Forest | Binary classification |
+| Data processing | Pandas | Dataset handling |
+| Numerical processing | NumPy | Numerical operations |
+| Model storage | Joblib | Model serialization |
+| Version control | Git | Source code management |
+| Repository hosting | GitHub | Project storage |
+
+---
+
+# 7. System Architecture
+
+SLA Guard follows a frontend-backend-machine-learning architecture.
+
+The frontend is responsible for collecting workload information and displaying prediction results.
+
+The backend receives the submitted data and communicates with the trained machine learning model.
+
+The model processes the input features and generates a probability estimate for the positive class.
+
+The backend applies the selected classification threshold and returns the prediction.
+
+### Main Components
+
+**1. Frontend Layer**
+
+- Developed using React.js.
+- Provides input fields for workload parameters.
+- Sends prediction requests to the backend.
+- Displays the prediction response.
+
+**2. Backend Layer**
+
+- Developed using FastAPI.
+- Receives requests from the frontend.
+- Loads the trained model.
+- Processes input features.
+- Returns prediction results.
+
+**3. Machine Learning Layer**
+
+- Uses a Random Forest classifier.
+- Accepts 12 input features.
+- Estimates the probability of an SLA violation.
+- Produces a binary classification after threshold application.
+
+**4. Model Storage Layer**
+
+- Stores the trained model in a `.pkl` file.
+- Stores the selected classification threshold separately.
+
+### Architecture Flow
+
+```text
+             USER
+               |
+               v
+       REACT FRONTEND
+               |
+               v
+        API REQUEST
+               |
+               v
+       FASTAPI BACKEND
+               |
+               v
+       INPUT PROCESSING
+               |
+               v
+     RANDOM FOREST MODEL
+               |
+               v
+     PROBABILITY ESTIMATION
+               |
+               v
+     THRESHOLD APPLICATION
+               |
+               v
+       BINARY PREDICTION
+               |
+               v
+       API RESPONSE
+               |
+               v
+       REACT DASHBOARD
+```
+
+---
+
+# 8. Overall System Workflow
+
+The application follows a sequence of steps whenever a user requests a prediction.
+
+### Step 1: Input Collection
+
+The user enters workload-related parameters through the frontend.
+
+### Step 2: Request Submission
+
+The frontend sends the entered values to the backend using an API request.
+
+### Step 3: Input Processing
+
+The backend receives the submitted data and prepares it in the feature order expected by the model.
+
+### Step 4: Model Execution
+
+The trained Random Forest model processes the input features.
+
+### Step 5: Probability Estimation
+
+The model calculates the probability associated with the SLA violation class.
+
+### Step 6: Threshold Application
+
+The selected classification threshold is applied to convert the probability into a binary prediction.
+
+### Step 7: Response Generation
+
+The backend prepares the prediction result and returns it to the frontend.
+
+### Step 8: Result Display
+
+The frontend displays the prediction and associated probability.
+
+---
+
+# 9. Dataset Description
+
+The project uses a synthetic cloud workload dataset containing 50,000 records and 13 columns.
+
+The dataset consists of:
+
+- 12 input features.
+- 1 target variable.
+
+The dataset represents workload and resource-related characteristics that may be relevant to SLA violation prediction.
+
+The dataset is synthetic and is used for experimentation and model development.
+
+It should not be considered a collection of actual production cloud workload observations.
+
+### Dataset Summary
+
+| Property | Description |
 |---|---|
-| `cpu_requested` | CPU resources requested by the workload |
-| `memory_requested` | Memory resources requested by the workload |
-| `cpu_utilization` | CPU utilization of the workload |
-| `memory_utilization` | Memory utilization of the workload |
-| `machine_cpu_utilization` | CPU utilization of the machine |
-| `machine_memory_utilization` | Memory utilization of the machine |
-| `queue_length` | Number of workloads waiting in the processing queue |
-| `priority` | Priority assigned to the workload |
-| `scheduling_class` | Scheduling category of the workload |
-| `network_latency_ms` | Network latency measured in milliseconds |
-| `estimated_runtime_sec` | Estimated workload execution time in seconds |
-| `resource_contention` | Indicator of competition for shared computing resources |
+| Dataset name | sla_guard_50000_unique_logs.csv |
+| Number of records | 50,000 |
+| Total columns | 13 |
+| Input features | 12 |
+| Target variable | SLA_Violation |
+| Learning type | Supervised learning |
+| Problem type | Binary classification |
 
-### Target variable
+### Dataset Purpose
 
-The target variable is:
+The dataset is used to train a model that learns patterns between workload-related features and the target classification.
+
+Each record represents an individual workload observation.
+
+The model uses the input columns to estimate the target class.
+
+---
+
+# 10. Dataset Features
+
+The dataset contains 12 input features.
+
+These features describe resource requirements, utilization, scheduling information, and workload conditions.
+
+### 10.1 cpu_requested
+
+Represents the CPU resources requested by a workload.
+
+It describes the amount of CPU capacity required for executing the workload.
+
+### 10.2 memory_requested
+
+Represents the memory resources requested by a workload.
+
+Memory requirements can influence workload execution and resource availability.
+
+### 10.3 cpu_utilization
+
+Represents CPU utilization associated with the workload.
+
+High CPU utilization may indicate increased processing demand.
+
+### 10.4 memory_utilization
+
+Represents memory utilization associated with the workload.
+
+It provides information about memory consumption.
+
+### 10.5 machine_cpu_utilization
+
+Represents CPU utilization at the machine level.
+
+It provides information about the overall CPU load of the machine executing the workload.
+
+### 10.6 machine_memory_utilization
+
+Represents machine-level memory utilization.
+
+It describes memory consumption at the machine level.
+
+### 10.7 queue_length
+
+Represents the number of workloads or tasks waiting in the processing queue.
+
+An increased queue length may indicate higher workload demand or processing delays.
+
+### 10.8 priority
+
+Represents the priority assigned to a workload.
+
+Priority information can be useful when analyzing scheduling behaviour.
+
+### 10.9 scheduling_class
+
+Represents the scheduling category assigned to a workload.
+
+It provides information about the workload's scheduling characteristics.
+
+### 10.10 network_latency_ms
+
+Represents network latency measured in milliseconds.
+
+Network latency can affect communication and application response time.
+
+### 10.11 estimated_runtime_sec
+
+Represents the estimated execution time of a workload in seconds.
+
+It provides an estimate of how long the workload is expected to run.
+
+### 10.12 resource_contention
+
+Represents the resource contention feature in the dataset.
+
+Resource contention can occur when multiple workloads compete for shared resources.
+
+---
+
+# 11. Target Variable
+
+The target column used for model training is:
 
 `SLA_Violation`
 
-It represents the classification outcome.
+It represents the class that the model is trained to predict.
 
-| Target value | Meaning |
+The target variable contains two possible classes.
+
+| Value | Meaning |
 |---|---|
 | 0 | No SLA violation |
 | 1 | SLA violation |
 
-The model learns relationships between the workload features and the target variable.
+The project uses binary classification because the prediction problem has two possible outcomes.
 
-### Dataset interpretation
-
-The dataset is synthetic and is used for model development and experimentation.
-
-The generated records should not be interpreted as actual measurements collected from a production cloud cluster.
-
-The model's performance on real-world cloud workload data remains to be established.
+The trained model estimates the probability of the positive class, which represents an SLA violation.
 
 ---
 
-## 4. Data preparation and splitting
+# 12. Data Preparation
 
-The dataset is divided into three separate subsets.
+Data preparation is an important stage of the machine learning workflow.
 
-The purpose of this division is to separate model training from threshold selection and final evaluation.
+Before training the classifier, the dataset must be separated into input features and the target variable.
 
-### Training dataset
+### Feature Selection
 
-The training dataset contains 60% of the complete dataset.
+The 12 workload-related columns are used as input features.
 
-It is used to train the Random Forest classifier and learn relationships between workload characteristics and SLA violation labels.
+The target column `SLA_Violation` is separated from the input data.
 
-### Validation dataset
+### Feature Consistency
 
-The validation dataset contains 20% of the complete dataset.
+The same feature names and ordering must be maintained during model training and prediction.
 
-It is used to evaluate different classification thresholds and select a threshold according to the desired recall.
+This is important because the model expects input data in the format used during training.
 
-The validation dataset is not used to train the final model.
+### Data Integrity
 
-### Testing dataset
+The dataset is used as the basis for training, validation, and testing.
 
-The testing dataset contains the remaining 20% of the dataset.
+Any preprocessing applied during training must also be reflected in the prediction pipeline where required.
 
-It is reserved for final evaluation and should not be used during training or threshold selection.
+---
 
-### Dataset split summary
+# 13. Dataset Splitting Strategy
 
-| Dataset | Percentage | Number of records |
+The dataset is divided into three subsets.
+
+The selected split is:
+
+| Subset | Percentage | Number of Records |
 |---|---:|---:|
 | Training | 60% | 30,000 |
 | Validation | 20% | 10,000 |
 | Testing | 20% | 10,000 |
-| **Total** | **100%** | **50,000** |
+| Total | 100% | 50,000 |
 
-This separation helps evaluate the model on observations that were not used for fitting or threshold selection.
+### 13.1 Training Dataset
+
+The training dataset is used to train the Random Forest classifier.
+
+It allows the model to learn relationships between input features and target labels.
+
+### 13.2 Validation Dataset
+
+The validation dataset is used to evaluate model behaviour during development.
+
+It is also used for classification threshold selection.
+
+### 13.3 Testing Dataset
+
+The test dataset is reserved for final evaluation.
+
+It should not be used to select the classification threshold or tune the model.
+
+Keeping the test dataset separate helps avoid reporting validation performance as final test performance.
 
 ---
 
-## 5. Machine learning model
+# 14. Machine Learning Approach
 
-### Random Forest Classifier
+SLA Guard uses supervised machine learning.
 
-SLA Guard uses the Random Forest classification algorithm from Scikit-learn.
+In supervised learning, a model is trained using input data along with corresponding target labels.
 
-Random Forest is an ensemble learning algorithm that combines multiple decision trees to generate a classification result.
+The model learns patterns from the training examples and uses the learned patterns to make predictions on new inputs.
 
-Instead of depending on a single decision tree, the algorithm builds several trees using different bootstrap samples and feature subsets.
+The project treats SLA violation prediction as a binary classification problem.
 
-Each tree generates a prediction, and the forest combines the predictions to estimate the final class probability.
+### Why Classification?
 
-### Working principle
+The required output is one of two possible classes:
 
-The Random Forest algorithm follows these steps:
+- No SLA violation.
+- SLA violation.
 
-1. Different bootstrap samples are generated from the training dataset.
-2. A decision tree is trained using each sample.
-3. A subset of features is considered at each decision split.
-4. Each tree learns patterns between workload features and SLA violation labels.
-5. The predictions of the individual trees are combined.
-6. The model produces a class probability estimate.
+The model therefore predicts a class rather than a continuous numerical value.
 
-For SLA Guard, the probability of the positive class is used for threshold-based classification.
+### Selected Algorithm
 
-### Why Random Forest was selected
+The selected algorithm is the Random Forest Classifier.
+
+Random Forest is an ensemble learning algorithm that combines multiple decision trees.
+
+The combined predictions of the trees are used to generate the final classification probability.
+
+---
+
+# 15. Random Forest Classifier
+
+Random Forest is an ensemble machine learning algorithm based on decision trees.
+
+Instead of relying on a single decision tree, it constructs multiple trees during training.
+
+Each tree learns patterns from the training data.
+
+The model combines the predictions of these trees to produce an overall result.
+
+### Working Principle
+
+1. Multiple decision trees are constructed.
+2. Each tree learns from training samples.
+3. Random subsets of features are considered during tree construction.
+4. Individual trees generate predictions.
+5. Their outputs are combined to produce the final result.
+
+### Why Random Forest Was Selected
 
 Random Forest was selected because:
 
-- It can capture nonlinear relationships between input features.
+- It supports classification problems.
+- It can model nonlinear relationships.
 - It combines multiple decision trees.
-- It supports binary classification.
-- It can handle multiple workload-related features.
-- It provides class probability estimates.
-- It supports class weighting for imbalanced datasets.
-- It generally reduces dependence on the behavior of a single decision tree.
+- It can generate class probability estimates.
+- It provides a practical baseline for structured tabular data.
 
-### Model configuration
-
-The implemented model uses the following hyperparameters:
-
-| Parameter | Value | Purpose |
-|---|---|---|
-| `n_estimators` | 300 | Number of decision trees |
-| `max_features` | `sqrt` | Features considered at each split |
-| `min_samples_leaf` | 2 | Minimum samples required in a leaf |
-| `class_weight` | `balanced_subsample` | Adjusts class weights for bootstrap samples |
-| `random_state` | 42 | Supports reproducibility |
-| `n_jobs` | -1 | Uses available CPU processing resources |
-
-### Explanation of hyperparameters
-
-**Number of estimators**
-
-The model uses 300 decision trees. The predictions from these trees are combined to produce the final classification probability.
-
-**Maximum features**
-
-The `sqrt` setting uses a square-root-based subset of available features when considering candidate splits.
-
-**Minimum samples per leaf**
-
-The minimum number of samples required in a leaf node is set to 2.
-
-This helps avoid creating leaf nodes based on a single training observation.
-
-**Class weighting**
-
-The model uses `balanced_subsample`.
-
-This adjusts class weights according to the class distribution in individual bootstrap samples.
-
-It does not generate additional dataset records.
-
-**Random state**
-
-The random state is set to 42 to support reproducibility when the same data and configuration are used.
-
-**Parallel processing**
-
-The `n_jobs=-1` setting allows Scikit-learn to use available CPU processing resources.
+The selection does not establish that Random Forest is the best possible algorithm for this dataset. Comparing additional models would be required to make that conclusion.
 
 ---
 
-## 6. Class imbalance handling
+# 16. Model Configuration
 
-Binary classification datasets may contain different numbers of observations belonging to each class.
+The Random Forest classifier uses the following configuration:
 
-This is known as class imbalance.
+```python
+RandomForestClassifier(
+    n_estimators=300,
+    max_features="sqrt",
+    min_samples_leaf=2,
+    class_weight="balanced_subsample",
+    random_state=42,
+    n_jobs=-1
+)
+```
 
-In SLA violation prediction, identifying actual violation cases is important because missed violations may reduce the usefulness of the predictive system.
+### Parameter Explanation
+
+**n_estimators = 300**
+
+The model constructs 300 decision trees.
+
+Increasing the number of trees can affect model stability and computational cost.
+
+**max_features = "sqrt"**
+
+The square root of the total number of input features is considered when searching for the best split at each tree node.
+
+**min_samples_leaf = 2**
+
+A leaf node must contain at least two samples.
+
+This parameter helps control the complexity of individual trees.
+
+**class_weight = "balanced_subsample"**
+
+Class weights are adjusted using the class distribution in individual bootstrap samples.
+
+This helps the classifier account for differences in class frequency.
+
+**random_state = 42**
+
+A fixed random state supports reproducibility of the experiment.
+
+**n_jobs = -1**
+
+The model uses all available CPU processors for parallel processing where supported.
+
+---
+
+# 17. Handling Class Imbalance
+
+Class imbalance occurs when one target class contains significantly more records than another.
+
+In classification problems, this can affect how a model learns and how its predictions should be evaluated.
+
+For SLA violation prediction, identifying positive violation cases is important.
+
+A model that predicts the majority class too frequently may fail to identify a substantial number of violation cases.
+
+### Technique Used
 
 The current implementation uses:
 
 `class_weight="balanced_subsample"`
 
-This approach adjusts the importance of classes during Random Forest training.
+This parameter adjusts class weights during Random Forest training.
 
-The weights are calculated based on the class distribution of individual bootstrap samples.
+It helps account for the distribution of classes in the training samples.
 
-### Why class weighting is used
+### Other Possible Techniques
 
-Class weighting helps the model account for differences in class frequencies without directly changing the number of observations in the dataset.
-
-It is different from oversampling methods because it does not create synthetic minority-class observations.
-
-### Future experimentation
-
-Other imbalance-handling methods could be investigated, including:
+The following techniques have not been implemented in the current model but may be investigated in future experiments:
 
 - Random oversampling.
 - Random undersampling.
@@ -305,662 +681,367 @@ Other imbalance-handling methods could be investigated, including:
 - Edited Nearest Neighbours.
 - SMOTE-ENN.
 
-These methods have not been used in the current implementation and would require separate experiments.
+These methods should be tested independently before deciding whether they improve model performance.
 
 ---
 
-## 7. Classification threshold optimization
+# 18. Classification Probability
 
-### Understanding classification probability
+The Random Forest classifier can generate a probability estimate for each class.
 
-The Random Forest classifier produces a probability estimate for the positive class.
+For SLA Guard, the positive class represents an SLA violation.
 
-The positive class represents an SLA violation.
+The model estimates the probability that an input workload belongs to the positive class.
 
-A classification threshold is used to convert the probability into a final binary prediction.
+For example, a model output of 0.72 represents an estimated positive-class probability of 72%.
 
-The default threshold is commonly 0.50.
+The probability is then used by the classification threshold to determine the final prediction.
 
-However, the project uses a lower threshold to prioritize recall.
+A probability estimate is not a guarantee that a violation will occur.
 
-### Threshold selection strategy
-
-The classification threshold was selected using the validation dataset.
-
-The threshold search considered values from approximately 0.05 to 0.95 with increments of 0.01.
-
-The target recall was set to 0.85.
-
-The selection process follows these steps:
-
-1. Generate probability predictions on validation data.
-2. Evaluate different classification thresholds.
-3. Calculate precision and recall for each threshold.
-4. Identify thresholds that achieve the target recall.
-5. Select the threshold with the highest precision among the qualifying thresholds.
-6. If no threshold satisfies the recall target, use the best F2-score as a fallback.
-
-### Selected threshold
-
-The selected threshold is approximately:
-
-`0.30`
-
-The value is stored in the project's threshold configuration.
-
-### Classification rule
-
-Let:
-
-- `P` represent the predicted probability of an SLA violation.
-- `T` represent the selected classification threshold.
-
-The decision rule is:
-
-- If `P >= T`, predict an SLA violation.
-- If `P < T`, predict no SLA violation.
-
-With the selected threshold of approximately 0.30:
-
-| Predicted probability | Classification |
-|---|---|
-| 0.20 | No SLA violation |
-| 0.30 | SLA violation |
-| 0.50 | SLA violation |
-| 0.75 | SLA violation |
-
-### Why a lower threshold is used
-
-A lower threshold makes the model more likely to classify a workload as a potential violation.
-
-This can increase recall because more actual violation cases may be identified.
-
-However, lowering the threshold can also increase false-positive predictions.
-
-Therefore, threshold selection involves a trade-off between identifying actual violations and avoiding unnecessary alarms.
+It is a model-generated estimate based on patterns learned from the training dataset.
 
 ---
 
-## 8. Model evaluation and validation results
+# 19. Classification Threshold Optimization
 
-The model is evaluated using classification metrics.
+A classification threshold is used to convert a probability estimate into a binary prediction.
 
-The main metrics considered are accuracy, precision, recall, F1-score, and F2-score.
+The default classification threshold commonly used in binary classification is 0.50.
 
-### Accuracy
+However, the default threshold is not necessarily suitable for every classification problem.
 
-Accuracy measures the proportion of correctly classified observations.
+SLA Guard uses a lower threshold of approximately 0.30.
 
-`Accuracy = Correct Predictions / Total Predictions`
+### Threshold Decision
 
-### Precision
+The prediction can be described as:
 
-Precision measures the proportion of predicted violation cases that are actually violations.
+```text
+If violation probability >= threshold:
+    Predict SLA Violation (1)
 
-`Precision = TP / (TP + FP)`
+Otherwise:
+    Predict No SLA Violation (0)
+```
 
-A higher precision indicates fewer false alarms among the predicted violation cases.
+### Why a Lower Threshold?
 
-### Recall
+The project places importance on identifying potential SLA violation cases.
 
-Recall measures the proportion of actual violation cases that are correctly identified.
+A lower threshold can classify more workloads as positive.
 
-`Recall = TP / (TP + FN)`
+This may increase recall, although it can also increase false-positive predictions and reduce precision.
 
-A higher recall indicates that fewer actual violation cases are missed.
+Therefore, threshold selection involves balancing multiple evaluation metrics.
 
-### F1-score
+### Threshold Selection Process
+
+1. Train the model using training data.
+2. Generate probability estimates on validation data.
+3. Evaluate different classification thresholds.
+4. Calculate precision and recall at each threshold.
+5. Select a threshold based on the recall requirement and precision.
+6. Save the selected threshold for use by the backend.
+
+The threshold was selected using validation data rather than the final test dataset.
+
+---
+
+# 20. Model Training Workflow
+
+The model training workflow consists of the following stages:
+
+**Stage 1: Dataset Loading**
+
+Load the synthetic dataset using Pandas.
+
+**Stage 2: Feature and Target Separation**
+
+Separate the 12 input features from the target column.
+
+**Stage 3: Dataset Splitting**
+
+Divide the dataset into training, validation, and testing subsets.
+
+**Stage 4: Model Initialization**
+
+Create the Random Forest classifier using the selected parameters.
+
+**Stage 5: Model Training**
+
+Train the classifier using the training dataset.
+
+**Stage 6: Probability Prediction**
+
+Generate probability estimates using validation data.
+
+**Stage 7: Threshold Optimization**
+
+Evaluate different thresholds and select the preferred threshold.
+
+**Stage 8: Model Saving**
+
+Save the trained model and selected threshold for backend integration.
+
+---
+
+# 21. Model Validation
+
+Validation is performed to examine how the trained model behaves on data not used for fitting the model.
+
+The validation dataset is separate from the training dataset.
+
+The project uses validation data for threshold optimization.
+
+The selected threshold is approximately 0.30.
+
+The validation metrics are calculated after applying this threshold.
+
+### Importance of Validation
+
+Validation helps in:
+
+- Examining model prediction behaviour.
+- Comparing classification thresholds.
+- Understanding precision and recall.
+- Selecting an operating threshold.
+- Reducing the risk of using the test dataset during development.
+
+The validation results should not be presented as final test results.
+
+---
+
+# 22. Evaluation Metrics
+
+The project considers classification metrics to understand the model's prediction performance.
+
+### 22.1 Precision
+
+Precision measures the proportion of predicted positive cases that are actually positive.
+
+Formula:
+
+```text
+Precision = TP / (TP + FP)
+```
+
+Where:
+
+- TP = True Positives.
+- FP = False Positives.
+
+Higher precision means fewer false-positive predictions among the predicted positive cases.
+
+### 22.2 Recall
+
+Recall measures the proportion of actual positive cases correctly identified by the model.
+
+Formula:
+
+```text
+Recall = TP / (TP + FN)
+```
+
+Where:
+
+- TP = True Positives.
+- FN = False Negatives.
+
+Recall is important when missing an actual SLA violation case is costly.
+
+### 22.3 F1-Score
 
 F1-score is the harmonic mean of precision and recall.
 
-It provides a combined measure of these two metrics.
+Formula:
 
-### F2-score
+```text
+F1 = 2 * (Precision * Recall) /
+     (Precision + Recall)
+```
 
-F2-score gives more importance to recall than precision.
+It provides a combined measure of precision and recall.
 
-It is useful when identifying actual SLA violation cases is a higher priority.
+### 22.4 Confusion Matrix
 
-### Validation results
+A confusion matrix summarizes classification outcomes.
 
-The validation threshold selection produced the following results at approximately 0.30.
+| | Predicted No Violation | Predicted Violation |
+|---|---|---|
+| Actual No Violation | True Negative | False Positive |
+| Actual Violation | False Negative | True Positive |
 
-| Metric | Validation result |
+The confusion matrix helps identify the types of prediction errors made by the classifier.
+
+---
+
+# 23. Validation Results
+
+At the selected classification threshold of approximately 0.30, the reported validation results are:
+
+| Metric | Validation Result |
 |---|---:|
 | Precision | 57.72% |
 | Recall | 85.31% |
-| Target recall | 85% |
-| Selected threshold | 0.30 |
+| Selected threshold | Approximately 0.30 |
 
 ### Interpretation
 
-The validation recall of 85.31% indicates that the model identified approximately 85 out of every 100 actual SLA violation cases in the validation dataset.
+**Precision: 57.72%**
 
-The validation precision of 57.72% indicates that approximately 58 out of every 100 predictions classified as violations were actual violations.
+Approximately 57.72% of the cases predicted as SLA violations were actual positive cases in the validation dataset.
 
-The results demonstrate the trade-off between identifying more violation cases and generating false alarms.
+**Recall: 85.31%**
 
-**Important:** These values are validation results from threshold selection. They are not final test-set results.
+Approximately 85.31% of the actual SLA violation cases in the validation dataset were identified by the model.
 
-The final testing metrics must be calculated separately on the reserved test dataset before being reported.
+### Performance Consideration
+
+The results show a recall-oriented operating point.
+
+This means the selected threshold prioritizes identifying a larger proportion of positive cases.
+
+However, the precision value also indicates that some predicted violations may be false positives.
+
+The choice of threshold depends on the relative cost of false positives and false negatives.
+
+**Important:** These are validation results. They must not be reported as final test-set results.
 
 ---
 
-## 9. Backend implementation
+# 24. Backend Implementation
 
-### FastAPI backend
+The backend is developed using Python and FastAPI.
 
-The backend is developed using FastAPI, a Python framework used to build APIs.
+It acts as the communication layer between the React frontend and the machine learning model.
 
-It acts as the communication layer between the React frontend and the trained machine learning model.
+### Responsibilities
 
-### Backend responsibilities
+The backend performs the following tasks:
 
-The backend performs the following operations:
+- Receives prediction requests.
+- Accepts workload-related input features.
+- Loads the trained Random Forest model.
+- Reads the saved classification threshold.
+- Prepares input data for prediction.
+- Generates probability estimates.
+- Applies the classification threshold.
+- Returns the prediction response.
 
-1. Receives workload information from the frontend.
-2. Validates incoming input parameters.
-3. Loads the saved Random Forest model.
-4. Loads the threshold configuration.
-5. Processes the input features.
-6. Generates the predicted class probability.
-7. Applies the classification threshold.
-8. Returns the prediction response.
+The backend uses the saved model instead of training the classifier whenever a user requests a prediction.
 
-### Model loading
+This separates model development from model inference.
 
-The trained model is stored in:
+---
 
-`backend/sla_random_forest_model.pkl`
+# 25. FastAPI Framework
 
-The backend loads this model using Joblib.
+FastAPI is a Python web framework used to build APIs.
 
-The model is loaded when the application starts, rather than being retrained for every prediction request.
+It is used in SLA Guard to expose the trained machine learning model through an HTTP endpoint.
 
-The threshold configuration is stored separately in:
+### Why FastAPI?
 
-`backend/sla_threshold.json`
+FastAPI provides:
 
-This file contains the selected classification threshold and related metadata.
+- Request handling.
+- Data validation.
+- Structured API responses.
+- Automatic interactive API documentation.
+- Integration with Python machine learning libraries.
 
-### Prediction endpoint
+The backend can be tested using its automatically generated Swagger documentation.
 
-The backend exposes a prediction endpoint:
+---
+
+# 26. Model Loading and Prediction
+
+The trained model is stored as a serialized file.
+
+The backend loads this file using Joblib.
+
+The saved model contains the trained classifier and can be used to generate predictions without repeating the complete training process.
+
+### Prediction Process
+
+1. Receive input features.
+2. Prepare the feature values.
+3. Load or access the trained model.
+4. Generate positive-class probability.
+5. Read the selected threshold.
+6. Compare probability with threshold.
+7. Return the prediction.
+
+The input feature order must match the order expected by the trained model.
+
+---
+
+# 27. Prediction API
+
+The backend provides a prediction endpoint:
 
 `POST /predict`
 
-The endpoint receives workload-related parameters in JSON format.
+The endpoint accepts workload-related parameters and returns the model's prediction result.
 
-The received features are passed to the trained model, which generates a probability estimate and classification result.
+### API Purpose
 
-### API documentation
+The endpoint connects the frontend to the machine learning model.
 
-FastAPI provides interactive API documentation through Swagger UI.
+It allows the application to perform inference without exposing the model implementation directly to the frontend.
 
-When the backend is running locally, the documentation can be accessed at:
+### Local API Address
 
-`http://127.0.0.1:8001/docs`
+```text
+http://127.0.0.1:8001/predict
+```
 
-This interface allows users to inspect and test the available API endpoints.
+### API Documentation
+
+```text
+http://127.0.0.1:8001/docs
+```
+
+The Swagger interface can be used to inspect the endpoint and submit test requests.
 
 ---
 
-## 10. Frontend implementation
-
-### React and Vite
+# 28. Frontend Implementation
 
 The frontend is developed using React.js and Vite.
 
-React is used to build the interactive user interface, while Vite provides the frontend development and build environment.
+React is used to create the user interface, while Vite provides the development environment.
 
-### Frontend responsibilities
+### Frontend Responsibilities
 
-The frontend provides the interface for interacting with the prediction system.
+- Display the application interface.
+- Collect workload input parameters.
+- Submit input data to the backend.
+- Receive prediction responses.
+- Display the predicted class.
+- Display the violation probability.
 
-Its responsibilities include:
+The frontend provides a more accessible way to interact with the machine learning model.
 
-- Displaying the application dashboard.
-- Collecting workload parameters.
-- Sending prediction requests.
-- Receiving responses from the backend.
-- Displaying the predicted SLA status.
-- Showing probability-related information.
-- Presenting relevant model and prediction details.
-
-### Frontend-backend communication
-
-The frontend communicates with FastAPI using HTTP requests.
-
-The prediction process follows these steps:
-
-1. User enters workload parameters.
-2. React collects the input values.
-3. The application creates a JSON request.
-4. The request is sent to the backend prediction endpoint.
-5. FastAPI validates and processes the input.
-6. The model generates the prediction.
-7. The backend returns a JSON response.
-8. React updates the interface with the returned result.
-
-The frontend must be configured with the correct backend API address.
+Users do not need to execute Python code manually to obtain a prediction.
 
 ---
 
-## 11. Prediction example
+# 29. Frontend-Backend Communication
 
-Consider a workload submitted through the SLA Guard prediction interface.
+The frontend communicates with the backend through HTTP requests.
 
-The Random Forest model generates a probability estimate for the positive class.
+The general communication process is:
 
-An example prediction response contains:
+1. The user enters the required workload values.
+2. React prepares the request data.
+3. The frontend sends the data to the FastAPI endpoint.
+4. FastAPI validates and processes the request.
+5. The model generates the prediction.
+6. The backend returns a response.
+7. React updates the displayed result.
 
-| Field | Example value |
-|---|---|
-| Prediction | 1 |
-| Violation probability | 72.83% |
-| Classification threshold | 30% |
-| Model | Random Forest |
+The backend and frontend must both be running locally for the complete application workflow to function.
 
-Since the predicted probability is greater than the selected threshold, the system classifies the workload as:
-
-**SLA Violation Predicted**
-
-### Interpretation
-
-The model's estimated probability is 72.83%, while the selected decision threshold is 30%.
-
-Because:
-
-`72.83% >= 30%`
-
-the final classification is 1.
-
-This is an illustrative example from a successful local API test. It does not represent a general performance metric or a guaranteed real-world probability of failure.
-
----
-
-## 12. Dataset provenance and interpretation
-
-The current SLA Guard dataset is synthetic.
-
-The dataset contains 50,000 records and 12 input features, with `SLA_Violation` as the target variable.
-
-The synthetic data is used to develop and test the machine learning prediction workflow.
-
-The following distinction is important:
-
-| Component | Current implementation |
-|---|---|
-| Workload dataset | Synthetic |
-| Input features | 12 workload-related parameters |
-| Target variable | `SLA_Violation` |
-| Training data | Synthetic workload records |
-| Validation data | Reserved synthetic validation records |
-| Test data | Reserved synthetic test records |
-| Prediction model | Random Forest classifier |
-| Prediction output | Binary classification and probability estimate |
-
-The results demonstrate the behavior of the model on the dataset used in the project.
-
-They do not establish that the model will achieve the same performance on real cloud infrastructure.
-
----
-
-## 13. Model storage and serialization
-
-The trained Random Forest model is saved as a serialized Python object.
-
-The model file is:
-
-`backend/sla_random_forest_model.pkl`
-
-The `.pkl` file stores the trained model so that it can be loaded and reused without repeating the training process.
-
-The backend uses Joblib to load the model.
-
-### Why model serialization is used
-
-- Avoids retraining for every prediction request.
-- Allows the trained model to be reused.
-- Separates model training from application execution.
-- Makes integration between the training script and backend easier.
-
-### Threshold configuration
-
-The project also stores threshold information in:
-
-`backend/sla_threshold.json`
-
-The configuration file allows the backend to use the selected classification threshold during prediction.
-
-### Git LFS
-
-The trained model is approximately 150 MB.
-
-Because it exceeds GitHub's standard 100 MB individual-file limit, Git Large File Storage (Git LFS) is used to store the model.
-
-The repository therefore includes Git LFS tracking for the serialized model.
-
----
-
-## 14. Project structure
-
-The repository contains the frontend implementation, backend implementation, machine learning files, and supporting configuration.
-
-```text
-sla-guard/
-│
-├── backend/
-│   ├── main.py
-│   ├── train_model.py
-│   ├── sla_random_forest_model.pkl
-│   ├── sla_threshold.json
-│   └── requirements.txt
-│
-├── src/
-│   ├── App.jsx
-│   ├── App.css
-│   └── main.jsx
-│
-├── public/
-│
-├── package.json
-├── package-lock.json
-├── vite.config.js
-├── index.html
-├── README.md
-├── .gitignore
-└── .gitattributes
-```
-
-### Important files
-
-| File | Purpose |
-|---|---|
-| `backend/main.py` | FastAPI application and prediction endpoint |
-| `backend/train_model.py` | Model training implementation |
-| `backend/sla_random_forest_model.pkl` | Saved Random Forest model |
-| `backend/sla_threshold.json` | Classification threshold configuration |
-| `backend/requirements.txt` | Python backend dependencies |
-| `src/App.jsx` | Main React component |
-| `src/App.css` | Frontend styling |
-| `src/main.jsx` | React entry point |
-| `package.json` | Frontend dependencies and scripts |
-| `vite.config.js` | Vite configuration |
-| `.gitignore` | Files excluded from Git |
-| `.gitattributes` | Git LFS tracking configuration |
-| `README.md` | Project documentation |
-
----
-
-## 15. Installation and reproduction
-
-### Prerequisites
-
-The following software is required:
-
-- Python.
-- Node.js and npm.
-- Git.
-- Git LFS.
-
-Git LFS is required to download the trained model from the repository.
-
-### Clone the repository
-
-```bash
-git clone https://github.com/Saloni1007/sla-guard.git
-```
-
-Navigate to the project directory:
-
-```bash
-cd sla-guard
-```
-
-Ensure that Git LFS is installed and the model file has been downloaded successfully.
-
-### Backend setup
-
-Navigate to the backend directory:
-
-```bash
-cd backend
-```
-
-Create a virtual environment:
-
-```bash
-python -m venv venv
-```
-
-Activate the virtual environment on Windows:
-
-```powershell
-venv\Scripts\activate
-```
-
-Install the required Python dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-Start the FastAPI backend:
-
-```bash
-uvicorn main:app --reload --port 8001
-```
-
-The backend will be available at:
-
-`http://127.0.0.1:8001`
-
-### API testing
-
-Open the FastAPI documentation:
-
-`http://127.0.0.1:8001/docs`
-
-Use the `/predict` endpoint to submit workload parameters and inspect the returned prediction.
-
-### Frontend setup
-
-Open another terminal in the main project directory.
-
-Install frontend dependencies:
-
-```bash
-npm install
-```
-
-Start the Vite development server:
-
-```bash
-npm run dev
-```
-
-Vite will display a local development URL.
-
-Open the displayed URL in a browser to access the SLA Guard application.
-
-The frontend must be configured to communicate with the running FastAPI backend.
-
----
-
-## 16. Testing and verification
-
-The project can be verified at the frontend, backend, and model levels.
-
-### Backend verification
-
-- Check that FastAPI starts successfully.
-- Verify that the serialized model loads.
-- Verify that the threshold configuration loads.
-- Open the Swagger documentation.
-- Submit valid input to `/predict`.
-- Check that the API returns a successful response.
-
-### Frontend verification
-
-- Verify that the dashboard loads.
-- Enter workload parameters.
-- Submit a prediction request.
-- Check that the frontend communicates with the backend.
-- Verify that the returned prediction is displayed correctly.
-
-### Model verification
-
-- Check that all 12 features are supplied.
-- Verify the expected feature ordering and input format.
-- Check that the model generates probability estimates.
-- Verify that the threshold is applied correctly.
-- Confirm that the final prediction is consistent with the probability and threshold.
-
-### Example API verification
-
-A successful local test returned HTTP status 200 and a prediction response.
-
-The tested example produced:
-
-- Predicted class: 1.
-- Violation probability: 72.83%.
-- Classification threshold: 30%.
-
-This verifies that the local prediction endpoint can load the model and return a prediction for the tested input.
-
----
-
-## 17. Limitations
-
-The current implementation has several limitations.
-
-### 1. Synthetic dataset
-
-The model is trained using synthetic cloud workload records.
-
-Synthetic data may not fully represent the complex and changing behavior of real cloud environments.
-
-Therefore, real-world generalization has not been established.
-
-### 2. Limited algorithm comparison
-
-Random Forest is the primary model used in the current implementation.
-
-A systematic comparison with other classifiers has not yet been completed.
-
-### 3. False-positive predictions
-
-The classification threshold prioritizes recall.
-
-This can help identify more actual violation cases but may also increase false alarms.
-
-### 4. No automatic violation prevention
-
-The system predicts potential SLA violations but does not automatically change resource allocation or workload scheduling.
-
-### 5. No continuous cloud monitoring
-
-The current application processes user-provided workload parameters rather than continuously receiving live cloud infrastructure metrics.
-
-### 6. Limited explainability
-
-The current prediction interface does not provide detailed explanations for every individual prediction.
-
-### 7. Dependency and model compatibility
-
-The saved model depends on compatible Python and Scikit-learn environments.
-
-Version differences between the training and execution environments may produce compatibility warnings or errors.
-
----
-
-## 18. Future work
-
-Several improvements can be explored in future versions.
-
-### Real-world dataset evaluation
-
-The model can be evaluated using real cloud workload datasets to examine whether it generalizes beyond synthetic records.
-
-### Machine learning algorithm comparison
-
-Random Forest can be compared with:
-
-- Logistic Regression.
-- Decision Tree.
-- XGBoost.
-- Naive Bayes.
-
-All models should be evaluated using the same data splits and metrics for a fair comparison.
-
-### Advanced class imbalance handling
-
-Additional experiments can investigate:
-
-- SMOTE.
-- Edited Nearest Neighbours.
-- SMOTE-ENN.
-- Alternative class-weighting strategies.
-
-### Improved threshold selection
-
-Threshold selection can be further studied to balance precision and recall according to the cost of missed violations and false alarms.
-
-### Explainable AI
-
-Techniques such as SHAP can be integrated to explain which workload features influence individual predictions.
-
-### Real-time cloud monitoring
-
-The system can be extended to collect live workload information from cloud monitoring services.
-
-### Automated resource recommendations
-
-Future versions could recommend resource adjustments or workload rescheduling when the model identifies a high risk of SLA violation.
-
-### Model deployment and scalability
-
-The backend could be deployed as a scalable service and tested under concurrent prediction requests.
-
----
-
-## 19. Conclusion
-
-SLA Guard demonstrates the application of machine learning to the problem of SLA violation prediction in cloud computing.
-
-The system analyzes 12 workload-related input features using a Random Forest classification model trained on a synthetic dataset containing 50,000 records.
-
-A probability-based classification threshold is selected using validation data to prioritize the identification of potential SLA violation cases.
-
-The React frontend and FastAPI backend provide an integrated application through which users can submit workload parameters and receive prediction results.
-
-The validation results demonstrate the model's behavior on the synthetic dataset, while also highlighting the trade-off between recall and precision.
-
-The project provides a foundation for further research into predictive cloud workload analysis. Future work can focus on real-world data evaluation, algorithm comparison, improved explainability, continuous monitoring, and automated resource optimization.
-
----
-
-## 20. GitHub repository
-
-The complete source code and supporting project files are maintained in the following GitHub repository.
-
-**Project name:** SLA Guard
-
-**GitHub repository:**
-
-https://github.com/Saloni1007/sla-guard
-
-The repository includes:
-
-- React frontend source code.
-- FastAPI backend implementation.
-- Random Forest model training script.
-- Serialized trained machine learning model.
-- Classification threshold configuration.
-- Project configuration files.
-- Documentation and setup instructions.
-
-The trained model is stored using Git Large File Storage (Git LFS) because of its file size.
-
-The repository is intended to provide access to the implementation and relevant files for project review and reproducibility.
+Cross-Origin Resource Sharing (CORS) configuration is
